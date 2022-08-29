@@ -266,6 +266,7 @@ def generateDomainPDDLFile(gen):
     gen.addPredicate(name="blocked", parameters=[("pt1" , "gridcell")] , isLastPredicate=True)
 
 
+    
 
     '''
     FILL ME : Add the actions UP, DOWN, FORWARD with the help of gen.addAction() as follows :
@@ -284,6 +285,25 @@ def generateDomainPDDLFile(gen):
                   precondition_string="(and (at ?truck ?loc) (at ?pkg ?loc))", 
                   effect_string= "(and (not (at ?pkg ?loc)) (in ?pkg ?truck))")
     '''
+    
+    gen.addAction(name="UP", 
+                  parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
+                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (up_next ?src ?dest)", 
+                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  )
+    
+    gen.addAction(name="DOWN", 
+                  parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
+                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (down_next ?src ?dest)", 
+                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  )
+    
+    gen.addAction(name="FORWARD", 
+                  parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
+                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (forward_next ?src ?dest)", 
+                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  )
+    
     pass
 
 def generateProblemPDDLFile(gen):
