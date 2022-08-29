@@ -194,8 +194,34 @@ class GeneratePDDL_Stationary :
 
         return "(at apn1 apt2) (at tru1 pos1) (at obj11 pos1) (at obj12 pos1) (at obj13 pos1) (at tru2 pos2) (at obj21 pos2) (at obj22 pos2)
                 (at obj23 pos2) (in-city pos1 cit1) (in-city apt1 cit1) (in-city pos2 cit2) (in-city apt2 cit2)" 
-        '''  
-        return ''
+        '''
+               
+        # Initial State of Agent
+        agentString = "(at " + self.grid_cell_list[self.state.agent.position.x * self.num_lanes + self.state.agent.position.y] + " agent1)"
+        
+        # Initial State of cars and blocked status
+        
+        carString = ''
+        for car in self.state.cars :
+            carString += "(at {} car{})".format(self.grid_cell_list[car.position.x * self.num_lanes + car.position.y], car.id)
+            
+            carString += " (blocked {})".format(self.grid_cell_list[car.position.x * self.num_lanes + car.position.y]) 
+        
+        # Initial State of grid cells with their up_next, down_next, forward_next predicates
+        gridString = ''
+        
+        for w in range(self.width) :
+            for lane in range(self.num_lanes) :
+                if w > 0 :
+                    if lane > 0 :
+                        gridString += " (up_next {} {})".format(self.grid_cell_list[w * self.num_lanes + lane], self.grid_cell_list[(w - 1) * self.num_lanes + lane - 1])
+                    
+                    if lane < self.num_lanes - 1 :
+                        gridString += " (down_next {} {})".format(self.grid_cell_list[w * self.num_lanes + lane], self.grid_cell_list[(w - 1) * self.num_lanes + lane + 1])
+                    
+                    gridString += " (forward_next {} {})".format(self.grid_cell_list[w * self.num_lanes + lane], self.grid_cell_list[(w - 1) * self.num_lanes + lane])
+        
+        return agentString + " " + carString + gridString
 
 
     def generateGoalString(self) :
@@ -212,8 +238,14 @@ class GeneratePDDL_Stationary :
         Example: The following statement adds goal string from https://github.com/pellierd/pddl4j/blob/master/pddl/logistics/p01.pddl  
 
         return "(and (at obj11 apt1) (at obj23 pos1) (at obj13 apt1) (at obj21 pos1)))"
-        '''    
-        return ''
+        '''
+        
+        goalString = ''
+        
+        # Goal State of Agent
+        goalString += "(at " + self.grid_cell_list[self.state.finish_position.y * self.num_lanes + self.state.finish_position.x] + " agent1)"
+        
+        return goalString
 
 
     def generateProblemPDDL(self) :
@@ -264,46 +296,26 @@ def generateDomainPDDLFile(gen):
     gen.addPredicate(name="down_next", parameters=(("pt1" , "gridcell"), ("pt2", "gridcell")))
     gen.addPredicate(name="forward_next", parameters=(("pt1" , "gridcell"), ("pt2", "gridcell")))
     gen.addPredicate(name="blocked", parameters=[("pt1" , "gridcell")] , isLastPredicate=True)
-
-
-    
-
-    '''
-    FILL ME : Add the actions UP, DOWN, FORWARD with the help of gen.addAction() as follows :
-
-        gen.addAction(name="UP", parameters = (...), precondition_string = "...", effect_string="...")
-        gen.addAction(name="DOWN", parameters = (...), precondition_string = "...", effect_string="...")
-        gen.addAction(name="FORWARD", parameters = (...), precondition_string = "...", effect_string="...")
-        
-        You have to fill up the ... in each of gen.addAction() above.
-        
-    Example :
-
-    The following statement adds the LOAD-TRUCK action from https://tinyurl.com/y3jocxdu [The domain file referenced in the assignment] to the domain file 
-    gen.addAction(name="LOAD-TRUCK", 
-                  parameters=(("pkg", "package"), ("truck" , "truck"), ("loc", "place")), 
-                  precondition_string="(and (at ?truck ?loc) (at ?pkg ?loc))", 
-                  effect_string= "(and (not (at ?pkg ?loc)) (in ?pkg ?truck))")
-    '''
-    
+ 
     gen.addAction(name="UP", 
                   parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
-                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (up_next ?src ?dest)", 
-                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  precondition_string="(and (at ?src ?agent) (not (blocked ?dest)) (up_next ?src ?dest))", 
+                  effect_string="(and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent)))"
                   )
     
     gen.addAction(name="DOWN", 
                   parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
-                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (down_next ?src ?dest)", 
-                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  precondition_string="(and (at ?src ?agent) (not (blocked ?dest)) (down_next ?src ?dest))", 
+                  effect_string="(and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent)))"
                   )
     
     gen.addAction(name="FORWARD", 
                   parameters=(("src" , "gridcell"), ("dest", "gridcell"), ("agent", "agent")), 
-                  precondition_string="and (at ?src ?agent) (not (blocked ?dest)) (forward_next ?src ?dest)", 
-                  effect_string="and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent))"
+                  precondition_string="(and (at ?src ?agent) (not (blocked ?dest)) (forward_next ?src ?dest))", 
+                  effect_string="(and (at ?dest ?agent) (not (blocked ?src)) (not (at ?src ?agent)))"
                   )
     
+    gen.generateDomainPDDL()
     pass
 
 def generateProblemPDDLFile(gen):
